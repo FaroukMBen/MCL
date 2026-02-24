@@ -4,7 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
-import { Alert, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
   const [newUsername, setNewUsername] = useState('');
@@ -13,7 +13,7 @@ export default function ProfileScreen() {
   const xp = useStore((state) => state.xp);
   const level = useStore((state) => state.level);
   const achievements = useStore((state) => state.achievements);
-  const completedItems = useStore((state) => state.completedItems);
+  const activityHistory = useStore((state) => state.activityHistory);
   const resetProgress = useStore((state) => state.resetProgress);
   const importState = useStore((state) => state.importState);
 
@@ -80,7 +80,8 @@ export default function ProfileScreen() {
 
   if (!username) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <IconSymbol name="person.fill" size={60} color="#0a7ea4" />
@@ -114,12 +115,13 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <IconSymbol name="person.fill" size={60} color="#0a7ea4" />
@@ -137,8 +139,8 @@ export default function ProfileScreen() {
             <Text style={styles.statValue}>{xp}</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Activités</Text>
-            <Text style={styles.statValue}>{completedItems.length}</Text>
+            <Text style={styles.statLabel}>Utilisations</Text>
+            <Text style={styles.statValue}>{activityHistory.length}</Text>
           </View>
         </View>
 
@@ -150,9 +152,9 @@ export default function ProfileScreen() {
             // For real scenarios, this logic should be inside the store based on completed items.
             // Simplified check based on completed array length.
             let isUnlocked = ach.unlocked;
-            if (ach.id === 'first_activity' && completedItems.length >= 1) isUnlocked = true;
-            if (ach.id === 'artist' && completedItems.length >= 2) isUnlocked = true;
-            if (ach.id === 'gamer' && completedItems.length >= 3) isUnlocked = true;
+            if (ach.id === 'first_activity' && activityHistory.length >= 1) isUnlocked = true;
+            if (ach.id === 'artist' && activityHistory.length >= 2) isUnlocked = true;
+            if (ach.id === 'gamer' && activityHistory.length >= 3) isUnlocked = true;
             
             return (
               <View key={ach.id} style={[styles.achievementCard, !isUnlocked && styles.achievementCardLocked]}>
@@ -190,7 +192,7 @@ export default function ProfileScreen() {
         </View>
         <View style={{height: 40}} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
   },
   scrollContent: {
     padding: 16,

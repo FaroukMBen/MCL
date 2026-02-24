@@ -4,7 +4,7 @@ import { AppCategory, AppType, CATALOG_DATA } from '@/constants/data';
 import { useStore } from '@/store/useStore';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const CATEGORIES: AppCategory[] = ['Activités', 'Coloriage', 'Jeux'];
 const AGE_GROUPS = ['3 ans', '5 ans', '6 ans', '7/8 ans', '9 ans+'];
@@ -27,9 +27,17 @@ export default function CatalogScreen() {
   // Common filters
   const [selectedCategory, setSelectedCategory] = useState<AppCategory | null>(null);
 
+  // Display modes & search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+
   const filteredData = useMemo(() => {
     const allData = [...CATALOG_DATA, ...customActivities];
     return allData.filter((item) => {
+      // 0. Search query
+      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+
       // 1. Matches Type
       if (item.type !== selectedType) return false;
 
@@ -46,7 +54,7 @@ export default function CatalogScreen() {
 
       return true;
     });
-  }, [selectedType, selectedCategory, selectedAgeGroup, selectedSchoolLevel, selectedClass]);
+  }, [selectedType, selectedCategory, selectedAgeGroup, selectedSchoolLevel, selectedClass, searchQuery, customActivities]);
 
   // Handling type switch
   const handleTypeChange = (type: AppType) => {
@@ -62,7 +70,8 @@ export default function CatalogScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Catalogue</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-activity' as any)}>
@@ -70,25 +79,45 @@ export default function CatalogScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Main Choice - Filter */}
-      <View style={styles.segmentedControl}>
-        <TouchableOpacity
-          style={[styles.segmentBtn, selectedType === 'Centre' && styles.segmentBtnActive]}
-          onPress={() => handleTypeChange('Centre')}
-        >
-          <Text style={[styles.segmentBtnText, selectedType === 'Centre' && styles.segmentBtnTextActive]}>
-            Centre
-          </Text>
+      <View style={styles.toolbar}>
+        <View style={styles.searchBar}>
+          <IconSymbol name="plus" size={20} color="#888" style={{transform: [{rotate: '45deg'}]}} /> {/* Placeholder for search icon */}
+          <TextInput 
+            style={styles.searchInput}
+            placeholder="Rechercher une activité..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity style={styles.toolBtn} onPress={() => setShowFilters(!showFilters)}>
+          <IconSymbol name="line.3.horizontal.decrease.circle" size={20} color={showFilters ? '#0a7ea4' : '#888'} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.segmentBtn, selectedType === 'Periscolaire' && styles.segmentBtnActive]}
-          onPress={() => handleTypeChange('Periscolaire')}
-        >
-          <Text style={[styles.segmentBtnText, selectedType === 'Periscolaire' && styles.segmentBtnTextActive]}>
-            Périscolaire
-          </Text>
+        <TouchableOpacity style={styles.toolBtn} onPress={() => setViewMode(viewMode === 'list' ? 'card' : 'list')}>
+          <IconSymbol name={viewMode === 'list' ? 'square.grid.2x2.fill' : 'list.bullet'} size={20} color="#0a7ea4" />
         </TouchableOpacity>
       </View>
+
+      {/* Filters Area */}
+      {showFilters && (
+        <View style={styles.filtersArea}>
+          <View style={styles.segmentedControl}>
+            <TouchableOpacity
+              style={[styles.segmentBtn, selectedType === 'Centre' && styles.segmentBtnActive]}
+              onPress={() => handleTypeChange('Centre')}
+            >
+              <Text style={[styles.segmentBtnText, selectedType === 'Centre' && styles.segmentBtnTextActive]}>
+                Centre
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.segmentBtn, selectedType === 'Periscolaire' && styles.segmentBtnActive]}
+              onPress={() => handleTypeChange('Periscolaire')}
+            >
+              <Text style={[styles.segmentBtnText, selectedType === 'Periscolaire' && styles.segmentBtnTextActive]}>
+                Périscolaire
+              </Text>
+            </TouchableOpacity>
+          </View>
 
       {/* Secondary Choice based on type */}
       <View style={styles.filtersContainer}>
@@ -149,6 +178,8 @@ export default function CatalogScreen() {
           </View>
         )}
       </View>
+        </View>
+      )}
 
       {/* Category filters */}
       <View style={styles.categoryFiltersContainer}>
@@ -168,14 +199,14 @@ export default function CatalogScreen() {
       {/* Content */}
       <ScrollView contentContainerStyle={styles.contentList}>
         {filteredData.length > 0 ? (
-          filteredData.map((item) => <CatalogItemCard key={item.id} item={item} />)
+          filteredData.map((item) => <CatalogItemCard key={item.id} item={item} viewMode={viewMode} />)
         ) : (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Aucune activité trouvée pour ces critères.</Text>
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -196,14 +227,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     padding: 16,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
     paddingBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   addBtn: {
     padding: 8,
@@ -214,6 +248,37 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a1a',
+  },
+  toolbar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e6e6e6',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    fontSize: 16,
+  },
+  toolBtn: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#e6e6e6',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filtersArea: {
+    marginBottom: 8,
   },
   segmentedControl: {
     flexDirection: 'row',
