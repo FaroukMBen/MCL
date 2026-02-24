@@ -52,7 +52,12 @@ export default function EtablissementDetailScreen() {
           <IconSymbol name="chevron.left" size={28} color="#0a7ea4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{etab.name}</Text>
-        <View style={{width: 40}} /> {/* Spacer to center title */}
+        <TouchableOpacity 
+          onPress={() => router.push({ pathname: '/etablissements', params: { editId: etab.id } } as any)} 
+          style={styles.editBtn}
+        >
+          <IconSymbol name="pencil" size={24} color="#0a7ea4" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -131,7 +136,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   backBtn: {
-    padding: 4,
+    width: 40,
+    alignItems: 'flex-start',
+  },
+  editBtn: {
+    width: 40,
+    alignItems: 'flex-end',
   },
   scrollContent: {
     paddingBottom: 40,

@@ -1,8 +1,8 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Etablissement, useStore } from '@/store/useStore';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function EtablissementsScreen() {
@@ -19,6 +19,7 @@ export default function EtablissementsScreen() {
   const [image, setImage] = useState<string | null>(null);
 
   const router = useRouter();
+  const { editId } = useLocalSearchParams<{ editId: string }>();
 
   const handleOpenForm = (etab?: Etablissement) => {
     if (etab) {
@@ -36,6 +37,17 @@ export default function EtablissementsScreen() {
     }
     setIsEditing(true);
   };
+
+  useEffect(() => {
+    if (editId) {
+      const etab = etablissements.find(e => e.id === editId);
+      if (etab) {
+        handleOpenForm(etab);
+        // Clear the param after opening to avoid re-triggering
+        router.setParams({ editId: undefined });
+      }
+    }
+  }, [editId, etablissements]);
 
   const handleSave = () => {
     if (!name.trim()) {
