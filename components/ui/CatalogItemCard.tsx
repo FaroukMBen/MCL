@@ -185,10 +185,16 @@ export function CatalogItemCard({ item, viewMode = 'card' }: Props) {
 
         <View style={styles.details}>
           {item.duration && (
-            <Text style={styles.detailText}>⏳ {item.duration}</Text>
+            <View style={{flexDirection:'row',alignItems:'center',gap:3}}>
+              <IconSymbol name="clock.fill" size={12} color="#888" />
+              <Text style={styles.detailText}>{item.duration}</Text>
+            </View>
           )}
           {item.location && (
-            <Text style={styles.detailText}>📍 {item.location}</Text>
+            <View style={{flexDirection:'row',alignItems:'center',gap:3}}>
+              <IconSymbol name="map.fill" size={12} color="#888" />
+              <Text style={styles.detailText}>{item.location}</Text>
+            </View>
           )}
         </View>
 

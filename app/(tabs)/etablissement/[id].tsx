@@ -71,7 +71,10 @@ export default function EtablissementDetailScreen() {
           <Text style={styles.name}>{etab.name}</Text>
           {etab.location && (
             <View style={styles.locationRow}>
-              <Text style={styles.locationText}>📍 {etab.location}</Text>
+              <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
+                <IconSymbol name="map.fill" size={16} color="#666" />
+                <Text style={styles.locationText}>{etab.location}</Text>
+              </View>
             </View>
           )}
 
