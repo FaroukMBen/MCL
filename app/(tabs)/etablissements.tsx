@@ -80,6 +80,7 @@ export default function EtablissementsScreen() {
   };
 
   if (isEditing) {
+    const isFormValid = name.trim().length > 0;
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" />
@@ -88,43 +89,79 @@ export default function EtablissementsScreen() {
             <IconSymbol name="chevron.left" size={28} color="#0a7ea4" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{currentId ? 'Modifier l\'établissement' : 'Nouvel établissement'}</Text>
-          <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-            <Text style={styles.saveBtnText}>Enregistrer</Text>
+          <TouchableOpacity onPress={handleSave} style={[styles.saveBtn, !isFormValid && styles.saveBtnDisabled]} disabled={!isFormValid}>
+            <Text style={[styles.saveBtnText, !isFormValid && styles.saveBtnTextDisabled]}>Enregistrer</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.formContent}>
+          {/* Photo */}
           <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
             {image ? (
               <Image source={{ uri: image }} style={styles.pickedImage} />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <IconSymbol name="plus" size={32} color="#0a7ea4" />
+                <IconSymbol name="building.2.fill" size={40} color="#0a7ea4" />
                 <Text style={styles.imagePlaceholderText}>Ajouter une photo</Text>
               </View>
             )}
+            <View style={styles.imageOverlayBadge}>
+              <IconSymbol name="pencil" size={14} color="#fff" />
+            </View>
           </TouchableOpacity>
 
-          <Text style={styles.label}>Nom *</Text>
-          <TextInput style={styles.input} placeholder="Ex: École Victor Hugo" value={name} onChangeText={setName} />
+          {/* Info section */}
+          <View style={styles.formCard}>
+            <View style={styles.formCardHeader}>
+              <IconSymbol name="building.2.fill" size={18} color="#0a7ea4" />
+              <Text style={styles.formCardTitle}>Informations</Text>
+            </View>
 
-          <Text style={styles.label}>Type</Text>
-          <View style={styles.typeSwitcher}>
-            {['centre', 'ecole', 'autre'].map((t) => (
-              <TouchableOpacity 
-                key={t} 
-                style={[styles.typeBtn, type === t && styles.typeBtnActive]}
-                onPress={() => setType(t)}
-              >
-                <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.label}>Nom *</Text>
+            <TextInput 
+              style={[styles.input, !name.trim() && styles.inputRequired]} 
+              placeholder="Ex: École Victor Hugo" 
+              value={name} 
+              onChangeText={setName}
+              placeholderTextColor="#aaa"
+            />
+
+            <Text style={styles.label}>Type</Text>
+            <View style={styles.typeSwitcher}>
+              {['centre', 'ecole', 'autre'].map((t) => (
+                <TouchableOpacity 
+                  key={t} 
+                  style={[styles.typeBtn, type === t && styles.typeBtnActive]}
+                  onPress={() => setType(t)}
+                >
+                  <IconSymbol 
+                    name={t === 'centre' ? 'house.fill' : t === 'ecole' ? 'book.fill' : 'building.2.fill'} 
+                    size={16} 
+                    color={type === t ? '#fff' : '#666'} 
+                  />
+                  <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Emplacement (Optionnel)</Text>
+            <TextInput 
+              style={styles.input} 
+              placeholder="Ex: 12 Rue des Lilas" 
+              value={location} 
+              onChangeText={setLocation}
+              placeholderTextColor="#aaa"
+            />
           </View>
 
-          <Text style={styles.label}>Emplacement (Optionnel)</Text>
-          <TextInput style={styles.input} placeholder="Ex: 12 Rue des Lilas" value={location} onChangeText={setLocation} />
+          {currentId && (
+            <TouchableOpacity style={styles.formDeleteBtn} onPress={() => { handleDelete(currentId); setIsEditing(false); }}>
+              <IconSymbol name="trash.fill" size={18} color="#ff4444" />
+              <Text style={styles.formDeleteBtnText}>Supprimer l'établissement</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </View>
     );
@@ -165,7 +202,7 @@ export default function EtablissementsScreen() {
                   <Text style={styles.etabBadgeText}>{etab.type}</Text>
                 </View>
                 <Text style={styles.etabName}>{etab.name}</Text>
-                {etab.location && <Text style={styles.etabLocation}>📍 {etab.location}</Text>}
+                {etab.location && <View style={{flexDirection:'row',alignItems:'center',gap:4}}><IconSymbol name="map.fill" size={14} color="#888" /><Text style={styles.etabLocation}>{etab.location}</Text></View>}
               </View>
               <View style={styles.etabActions}>
                 <TouchableOpacity style={styles.actionBtn} onPress={(e) => { e.stopPropagation(); handleOpenForm(etab); }}>
@@ -306,11 +343,14 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   saveBtn: {
-    padding: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#0a7ea4',
+    borderRadius: 8,
   },
   saveBtnText: {
-    color: '#0a7ea4',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 15,
     fontWeight: 'bold',
   },
   formContent: {
@@ -366,11 +406,14 @@ const styles = StyleSheet.create({
   typeBtn: {
     flex: 1,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#e0e0e0',
     alignItems: 'center',
     borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
   },
   typeBtnActive: {
     backgroundColor: '#0a7ea4',
@@ -379,8 +422,72 @@ const styles = StyleSheet.create({
   typeBtnText: {
     color: '#555',
     fontWeight: '600',
+    fontSize: 13,
   },
   typeBtnTextActive: {
     color: '#fff',
-  }
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#ccc',
+  },
+  saveBtnTextDisabled: {
+    color: '#999',
+  },
+  imageOverlayBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  formCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingBottom: 12,
+  },
+  formCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  inputRequired: {
+    borderColor: '#ffc107',
+    borderWidth: 1.5,
+  },
+  formDeleteBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ff4444',
+    marginTop: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  formDeleteBtnText: {
+    color: '#ff4444',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
 });
