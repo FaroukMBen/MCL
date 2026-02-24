@@ -20,7 +20,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Catalogue',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="statistics"
+        options={{
+          title: 'Statistiques',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="etablissements"
+        options={{
+          title: 'Établissements',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="building.2.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -28,6 +42,24 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create-activity"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="activity/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="etablissement/[id]"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
