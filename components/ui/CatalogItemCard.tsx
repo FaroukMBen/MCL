@@ -1,6 +1,7 @@
 import { CatalogItem } from '@/constants/data';
 import { Colors } from '@/constants/theme';
 import { useStore } from '@/store/useStore';
+import { useRouter } from 'expo-router';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from './icon-symbol';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function CatalogItemCard({ item }: Props) {
+  const router = useRouter();
   const completedItems = useStore((state) => state.completedItems);
   const addCompletedItem = useStore((state) => state.addCompletedItem);
   const addXp = useStore((state) => state.addXp);
@@ -23,8 +25,12 @@ export function CatalogItemCard({ item }: Props) {
   };
 
   return (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
+    <TouchableOpacity 
+      style={styles.card} 
+      activeOpacity={0.8}
+      onPress={() => router.push(`/activity/${item.id}` as any)}
+    >
+      <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1549488344-1f9b8d2bd1f3?w=400&q=80' }} style={styles.image} />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>{item.title}</Text>
@@ -55,7 +61,7 @@ export function CatalogItemCard({ item }: Props) {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

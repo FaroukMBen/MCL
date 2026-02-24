@@ -1,5 +1,8 @@
 import { CatalogItemCard } from '@/components/ui/CatalogItemCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AppCategory, AppType, CATALOG_DATA } from '@/constants/data';
+import { useStore } from '@/store/useStore';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,7 +13,9 @@ const PRIMAIRE_CLASSES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
 const MATERNELLE_CLASSES = ['Petite section', 'Moyenne section', 'Grande section'];
 
 export default function CatalogScreen() {
+  const router = useRouter();
   const [selectedType, setSelectedType] = useState<AppType>('Centre');
+  const customActivities = useStore((state) => state.customActivities);
   
   // State for 'Centre'
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
@@ -23,7 +28,8 @@ export default function CatalogScreen() {
   const [selectedCategory, setSelectedCategory] = useState<AppCategory | null>(null);
 
   const filteredData = useMemo(() => {
-    return CATALOG_DATA.filter((item) => {
+    const allData = [...CATALOG_DATA, ...customActivities];
+    return allData.filter((item) => {
       // 1. Matches Type
       if (item.type !== selectedType) return false;
 
@@ -59,6 +65,9 @@ export default function CatalogScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Catalogue</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/create-activity' as any)}>
+          <IconSymbol name="plus" size={24} color="#0a7ea4" />
+        </TouchableOpacity>
       </View>
 
       {/* Main Choice - Filter */}
@@ -192,6 +201,14 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addBtn: {
+    padding: 8,
+    backgroundColor: '#e6f2f7',
+    borderRadius: 20,
   },
   headerTitle: {
     fontSize: 28,

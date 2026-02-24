@@ -1,3 +1,4 @@
+import { CatalogItem } from '@/constants/data';
 import * as FileSystem from 'expo-file-system/legacy';
 import { create } from 'zustand';
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
@@ -59,6 +60,10 @@ export interface UserState {
     level: number;
     completedItems: string[];
     achievements: Achievement[];
+    username: string | null;
+    customActivities: CatalogItem[];
+    setUsername: (username: string) => void;
+    addCustomActivity: (activity: CatalogItem) => void;
     addCompletedItem: (itemId: string) => void;
     removeCompletedItem: (itemId: string) => void;
     addXp: (amount: number) => void;
@@ -77,8 +82,15 @@ export const useStore = create<UserState>()(
         (set, get) => ({
             xp: 0,
             level: 1,
+            username: null,
+            customActivities: [],
             completedItems: [],
             achievements: INITIAL_ACHIEVEMENTS,
+            setUsername: (username) => set({ username }),
+            addCustomActivity: (activity) => {
+                const state = get();
+                set({ customActivities: [...state.customActivities, activity] });
+            },
             addCompletedItem: (itemId) => {
                 const state = get();
                 if (!state.completedItems.includes(itemId)) {
@@ -97,10 +109,12 @@ export const useStore = create<UserState>()(
                 set({ xp: newXp, level: newLevel });
             },
             resetProgress: () => {
-                set({ xp: 0, level: 1, completedItems: [], achievements: INITIAL_ACHIEVEMENTS });
+                set({ username: null, xp: 0, level: 1, completedItems: [], achievements: INITIAL_ACHIEVEMENTS, customActivities: [] });
             },
             importState: (newState) => {
                 set({
+                    username: newState.username || null,
+                    customActivities: newState.customActivities || [],
                     xp: newState.xp || 0,
                     level: newState.level || 1,
                     completedItems: newState.completedItems || [],

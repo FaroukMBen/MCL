@@ -3,9 +3,13 @@ import { useStore } from '@/store/useStore';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { Alert, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
+  const [newUsername, setNewUsername] = useState('');
+  const username = useStore((state) => state.username);
+  const setUsername = useStore((state) => state.setUsername);
   const xp = useStore((state) => state.xp);
   const level = useStore((state) => state.level);
   const achievements = useStore((state) => state.achievements);
@@ -74,12 +78,52 @@ export default function ProfileScreen() {
     );
   };
 
+  if (!username) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <IconSymbol name="person.fill" size={60} color="#0a7ea4" />
+            <Text style={styles.headerTitle}>Bienvenue</Text>
+            <Text style={{color: '#666', marginTop: 8, textAlign: 'center'}}>Vous n'avez pas encore de profil. Créez-en un nouveau ou importez votre progression.</Text>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Créer un profil</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nom d'utilisateur"
+              value={newUsername}
+              onChangeText={setNewUsername}
+            />
+            <TouchableOpacity 
+              style={[styles.actionBtn, { backgroundColor: '#0a7ea4', borderColor: '#0a7ea4', marginTop: 8 }]} 
+              onPress={() => {
+                if(newUsername.trim()) setUsername(newUsername.trim());
+              }}
+            >
+              <Text style={[styles.actionBtnText, { color: '#fff' }]}>Commencer</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Ou importer existant</Text>
+            <TouchableOpacity style={styles.actionBtn} onPress={handleImport}>
+              <IconSymbol name="paperplane.fill" size={20} color="#28a745" />
+              <Text style={[styles.actionBtnText, { color: '#28a745' }]}>Importer une progression</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <IconSymbol name="person.fill" size={60} color="#0a7ea4" />
-          <Text style={styles.headerTitle}>Mon Profil</Text>
+          <Text style={styles.headerTitle}>Profil de {username}</Text>
         </View>
 
         {/* Stats Section */}
@@ -266,5 +310,14 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    fontSize: 16,
   },
 });
