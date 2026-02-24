@@ -21,6 +21,15 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'plus': 'add',
+  'chart.bar.fill': 'bar-chart',
+  'building.2.fill': 'business',
+  'list.bullet': 'format-list-bulleted',
+  'square.grid.2x2.fill': 'grid-view',
+  'line.3.horizontal.decrease.circle': 'filter-list',
+  'pencil': 'edit',
+  'trash.fill': 'delete',
+  'chevron.left': 'chevron-left',
+  'calendar': 'event',
 } as IconMapping;
 
 /**

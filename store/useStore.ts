@@ -55,17 +55,37 @@ export interface Achievement {
     dateUnlocked?: number;
 }
 
+export interface Etablissement {
+    id: string;
+    name: string;
+    type: string; // 'centre', 'ecole', etc.
+    image?: string;
+    location?: string;
+}
+
+export interface ActivityUsage {
+    id: string;
+    activityId: string;
+    date: number;
+    etablissementId?: string;
+}
+
 export interface UserState {
     xp: number;
     level: number;
-    completedItems: string[];
+    activityHistory: ActivityUsage[];
     achievements: Achievement[];
     username: string | null;
     customActivities: CatalogItem[];
+    etablissements: Etablissement[];
     setUsername: (username: string) => void;
     addCustomActivity: (activity: CatalogItem) => void;
-    addCompletedItem: (itemId: string) => void;
-    removeCompletedItem: (itemId: string) => void;
+    updateCustomActivity: (activity: CatalogItem) => void;
+    removeCustomActivity: (id: string) => void;
+    addEtablissement: (etablissement: Etablissement) => void;
+    updateEtablissement: (etablissement: Etablissement) => void;
+    removeEtablissement: (id: string) => void;
+    recordActivityUsage: (activityId: string, customDate?: number, etablissementId?: string) => void;
     addXp: (amount: number) => void;
     resetProgress: () => void;
     importState: (newState: any) => void;
@@ -84,23 +104,43 @@ export const useStore = create<UserState>()(
             level: 1,
             username: null,
             customActivities: [],
-            completedItems: [],
+            etablissements: [],
+            activityHistory: [],
             achievements: INITIAL_ACHIEVEMENTS,
             setUsername: (username) => set({ username }),
             addCustomActivity: (activity) => {
                 const state = get();
                 set({ customActivities: [...state.customActivities, activity] });
             },
-            addCompletedItem: (itemId) => {
+            updateCustomActivity: (activity) => {
                 const state = get();
-                if (!state.completedItems.includes(itemId)) {
-                    // Check for achievements based on logic eventually
-                    set({ completedItems: [...state.completedItems, itemId] });
-                }
+                set({ customActivities: state.customActivities.map((a) => a.id === activity.id ? activity : a) });
             },
-            removeCompletedItem: (itemId) => {
+            removeCustomActivity: (id) => {
                 const state = get();
-                set({ completedItems: state.completedItems.filter((i) => i !== itemId) });
+                set({ customActivities: state.customActivities.filter((a) => a.id !== id) });
+            },
+            addEtablissement: (etablissement) => {
+                const state = get();
+                set({ etablissements: [...state.etablissements, etablissement] });
+            },
+            updateEtablissement: (etablissement) => {
+                const state = get();
+                set({ etablissements: state.etablissements.map((e) => e.id === etablissement.id ? etablissement : e) });
+            },
+            removeEtablissement: (id) => {
+                const state = get();
+                set({ etablissements: state.etablissements.filter((e) => e.id !== id) });
+            },
+            recordActivityUsage: (activityId, customDate, etablissementId) => {
+                const state = get();
+                const newUsage: ActivityUsage = {
+                    id: `usage_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    activityId,
+                    date: customDate || Date.now(),
+                    etablissementId: etablissementId || undefined,
+                };
+                set({ activityHistory: [...state.activityHistory, newUsage] });
             },
             addXp: (amount) => {
                 const state = get();
@@ -109,15 +149,16 @@ export const useStore = create<UserState>()(
                 set({ xp: newXp, level: newLevel });
             },
             resetProgress: () => {
-                set({ username: null, xp: 0, level: 1, completedItems: [], achievements: INITIAL_ACHIEVEMENTS, customActivities: [] });
+                set({ username: null, xp: 0, level: 1, activityHistory: [], achievements: INITIAL_ACHIEVEMENTS, customActivities: [], etablissements: [] });
             },
             importState: (newState) => {
                 set({
                     username: newState.username || null,
                     customActivities: newState.customActivities || [],
+                    etablissements: newState.etablissements || [],
                     xp: newState.xp || 0,
                     level: newState.level || 1,
-                    completedItems: newState.completedItems || [],
+                    activityHistory: newState.activityHistory || [],
                     achievements: newState.achievements || INITIAL_ACHIEVEMENTS,
                 });
             },

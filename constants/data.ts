@@ -6,6 +6,7 @@ export interface CatalogItem {
     title: string;
     description: string;
     image: string;
+    images?: string[];
     duration?: string;
     location?: string;
     prerequis?: string;
