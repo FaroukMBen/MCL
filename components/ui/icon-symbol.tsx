@@ -30,6 +30,23 @@ const MAPPING = {
   'trash.fill': 'delete',
   'chevron.left': 'chevron-left',
   'calendar': 'event',
+  'star.fill': 'star',
+  'flame.fill': 'local-fire-department',
+  'trophy.fill': 'emoji-events',
+  'paintbrush.fill': 'brush',
+  'gamecontroller.fill': 'sports-esports',
+  'bolt.fill': 'bolt',
+  'heart.fill': 'favorite',
+  'sparkles': 'auto-awesome',
+  'crown.fill': 'workspace-premium',
+  'target': 'gps-fixed',
+  'map.fill': 'map',
+  'clock.fill': 'schedule',
+  'checkmark.circle.fill': 'check-circle',
+  'xmark': 'close',
+  'arrow.up.circle.fill': 'arrow-circle-up',
+  'folder.fill': 'folder',
+  'magnifyingglass': 'search',
 } as IconMapping;
 
 /**
