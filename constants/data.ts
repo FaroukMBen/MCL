@@ -1,6 +1,12 @@
 export type AppCategory = 'Activités' | 'Coloriage' | 'Jeux';
 export type AppType = 'Centre' | 'Periscolaire';
 
+export interface AttachmentFile {
+    uri: string;
+    name: string;
+    type: string; // mime type
+}
+
 export interface CatalogItem {
     id: string;
     title: string;
@@ -10,6 +16,7 @@ export interface CatalogItem {
     duration?: string;
     location?: string;
     prerequis?: string;
+    attachments?: AttachmentFile[];
     category: AppCategory;
     type: AppType;
     // If Centre
