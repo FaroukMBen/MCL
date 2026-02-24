@@ -184,11 +184,13 @@ export interface UserState {
     activityHistory: ActivityUsage[];
     achievements: Achievement[];
     username: string | null;
+    profileImage: string | null;
     customActivities: CatalogItem[];
     etablissements: Etablissement[];
     pendingNotifications: AchievementNotification[];
 
     setUsername: (username: string) => void;
+    setProfileImage: (uri: string | null) => void;
     addCustomActivity: (activity: CatalogItem) => void;
     updateCustomActivity: (activity: CatalogItem) => void;
     removeCustomActivity: (id: string) => void;
@@ -284,6 +286,7 @@ export const useStore = create<UserState>()(
             xp: 0,
             level: 1,
             username: null,
+            profileImage: null,
             customActivities: [],
             etablissements: [],
             activityHistory: [],
@@ -291,6 +294,7 @@ export const useStore = create<UserState>()(
             pendingNotifications: [],
 
             setUsername: (username) => set({ username }),
+            setProfileImage: (uri) => set({ profileImage: uri }),
 
             addCustomActivity: (activity) => {
                 const state = get();
@@ -398,6 +402,7 @@ export const useStore = create<UserState>()(
             resetProgress: () => {
                 set({
                     username: null,
+                    profileImage: null,
                     xp: 0,
                     level: 1,
                     activityHistory: [],
@@ -411,6 +416,7 @@ export const useStore = create<UserState>()(
             importState: (newState) => {
                 set({
                     username: newState.username || null,
+                    profileImage: newState.profileImage || null,
                     customActivities: newState.customActivities || [],
                     etablissements: newState.etablissements || [],
                     xp: newState.xp || 0,

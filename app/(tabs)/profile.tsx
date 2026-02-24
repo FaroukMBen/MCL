@@ -2,16 +2,22 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Achievement, getLevelFromXp, getLevelTitle, RARITY_COLORS, RARITY_LABELS, useStore } from '@/store/useStore';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
-import { Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
-  const [newUsername, setNewUsername] = useState('');
   const username = useStore((state) => state.username);
+  const profileImage = useStore((state) => state.profileImage);
   const setUsername = useStore((state) => state.setUsername);
+  const setProfileImage = useStore((state) => state.setProfileImage);
   const xp = useStore((state) => state.xp);
   const achievements = useStore((state) => state.achievements);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editImage, setEditImage] = useState<string | null>(null);
   const activityHistory = useStore((state) => state.activityHistory);
   const etablissements = useStore((state) => state.etablissements);
   const customActivities = useStore((state) => state.customActivities);
@@ -97,6 +103,34 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleStartEdit = () => {
+    setEditName(username || '');
+    setEditImage(profileImage);
+    setIsEditing(true);
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setEditImage(result.assets[0].uri);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    if (editName.trim()) {
+      setUsername(editName.trim());
+      setProfileImage(editImage);
+      setIsEditing(false);
+      Alert.alert('Succès', 'Profil mis à jour !');
+    }
+  };
+
   if (!username) {
     return (
       <View style={styles.container}>
@@ -114,19 +148,32 @@ export default function ProfileScreen() {
           
           <View style={styles.onboardingCard}>
             <Text style={styles.onboardingCardTitle}>Créer un profil</Text>
+            <TouchableOpacity style={styles.onboardingAvatarPicker} onPress={pickImage}>
+              {editImage ? (
+                <Image source={{ uri: editImage }} style={styles.onboardingAvatar} />
+              ) : (
+                <View style={[styles.onboardingAvatar, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
+                  <IconSymbol name="plus" size={32} color="#0a7ea4" />
+                </View>
+              )}
+              <Text style={styles.onboardingAvatarLabel}>Photo (optionnel)</Text>
+            </TouchableOpacity>
             <TextInput
               style={styles.input}
               placeholder="Votre prénom ou pseudo..."
-              value={newUsername}
-              onChangeText={setNewUsername}
+              value={editName}
+              onChangeText={setEditName}
               placeholderTextColor="#aaa"
             />
             <TouchableOpacity 
-              style={[styles.primaryBtn, !newUsername.trim() && styles.primaryBtnDisabled]} 
+              style={[styles.primaryBtn, !editName.trim() && styles.primaryBtnDisabled]} 
               onPress={() => {
-                if(newUsername.trim()) setUsername(newUsername.trim());
+                if(editName.trim()) {
+                  setUsername(editName.trim());
+                  setProfileImage(editImage);
+                }
               }}
-              disabled={!newUsername.trim()}
+              disabled={!editName.trim()}
             >
               <IconSymbol name="bolt.fill" size={20} color="#fff" />
               <Text style={styles.primaryBtnText}>Commencer l'aventure</Text>
@@ -151,14 +198,29 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{username.charAt(0).toUpperCase()}</Text>
-          </View>
+          <TouchableOpacity style={styles.avatarWrapper} onPress={handleStartEdit}>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>{username.charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
+            <View style={styles.editBadge}>
+              <IconSymbol name="pencil" size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
+          
           <Text style={styles.profileName}>{username}</Text>
           <View style={styles.levelBadge}>
             <IconSymbol name="star.fill" size={14} color="#ffd700" />
             <Text style={styles.levelBadgeText}>Niv. {levelInfo.level} — {levelTitle}</Text>
           </View>
+          
+          <TouchableOpacity style={styles.editProfileFloat} onPress={handleStartEdit}>
+            <IconSymbol name="pencil" size={18} color="#0a7ea4" />
+            <Text style={styles.editProfileFloatText}>Modifier</Text>
+          </TouchableOpacity>
         </View>
 
         {/* XP Progress Bar */}
@@ -252,6 +314,59 @@ export default function ProfileScreen() {
         </View>
         <View style={{height: 40}} />
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={isEditing} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Modifier le profil</Text>
+              <TouchableOpacity onPress={() => setIsEditing(false)}>
+                <IconSymbol name="xmark" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.editAvatarSection}>
+              <TouchableOpacity style={styles.editAvatarCircle} onPress={pickImage}>
+                {editImage ? (
+                  <Image source={{ uri: editImage }} style={styles.editAvatarImage} />
+                ) : (
+                  <View style={[styles.editAvatarImage, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={styles.avatarText}>{username.charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
+                <View style={styles.editAvatarBadge}>
+                  <IconSymbol name="paintbrush.fill" size={14} color="#fff" />
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.editAvatarLabel}>Changer la photo</Text>
+            </View>
+
+            <View style={styles.editInputSection}>
+              <Text style={styles.inputLabel}>Nom d'utilisateur</Text>
+              <TextInput
+                style={styles.input}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Votre nom..."
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsEditing(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.saveBtn, !editName.trim() && styles.saveBtnDisabled]} 
+                onPress={handleSaveProfile}
+                disabled={!editName.trim()}
+              >
+                <Text style={styles.saveBtnText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -644,8 +759,175 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     padding: 16,
     borderRadius: 12,
-    marginBottom: 12,
     fontSize: 16,
     color: '#333',
+  },
+  onboardingAvatarPicker: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  onboardingAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#0a7ea4',
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  onboardingAvatarLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0a7ea4',
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0a7ea4',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  editProfileFloat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  editProfileFloatText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#0a7ea4',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  editAvatarSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  editAvatarCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 3,
+    borderColor: '#eee',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  editAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  editAvatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0a7ea4',
+    padding: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  editAvatarLabel: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#0a7ea4',
+    fontWeight: '600',
+  },
+  editInputSection: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#666',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  cancelBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  saveBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#0a7ea4',
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#ccc',
+  },
+  saveBtnText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
