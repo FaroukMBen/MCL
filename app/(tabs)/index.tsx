@@ -12,51 +12,41 @@ const SCHOOL_LEVELS = ['primaire', 'maternelle'];
 const PRIMAIRE_CLASSES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
 const MATERNELLE_CLASSES = ['Petite section', 'Moyenne section', 'Grande section'];
 
+const CATEGORY_ICONS: Record<string, string> = {
+  'Activités': 'bolt.fill',
+  'Coloriage': 'paintbrush.fill',
+  'Jeux': 'gamecontroller.fill',
+};
+
 export default function CatalogScreen() {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<AppType>('Centre');
   const customActivities = useStore((state) => state.customActivities);
   
-  // State for 'Centre'
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
-  
-  // State for 'Periscolaire'
   const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
-
-  // Common filters
   const [selectedCategory, setSelectedCategory] = useState<AppCategory | null>(null);
-
-  // Display modes & search
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+  const [filtersVisible, setFiltersVisible] = useState(true);
 
   const filteredData = useMemo(() => {
     const allData = [...CATALOG_DATA, ...customActivities];
     return allData.filter((item) => {
-      // 0. Search query
       if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-
-      // 1. Matches Type
       if (item.type !== selectedType) return false;
-
-      // 2. Matches Category
       if (selectedCategory && item.category !== selectedCategory) return false;
-
-      // 3. Matches Type-specific subfilters
       if (selectedType === 'Centre') {
         if (selectedAgeGroup && item.ageGroup !== selectedAgeGroup) return false;
       } else if (selectedType === 'Periscolaire') {
         if (selectedSchoolLevel && item.schoolLevel !== selectedSchoolLevel) return false;
         if (selectedClass && item.schoolClass !== selectedClass) return false;
       }
-
       return true;
     });
   }, [selectedType, selectedCategory, selectedAgeGroup, selectedSchoolLevel, selectedClass, searchQuery, customActivities]);
 
-  // Handling type switch
   const handleTypeChange = (type: AppType) => {
     setSelectedType(type);
     setSelectedAgeGroup(null);
@@ -64,9 +54,21 @@ export default function CatalogScreen() {
     setSelectedClass(null);
   };
 
-  const handleSchoolLevelChange = (level: string) => {
-    setSelectedSchoolLevel(level);
-    setSelectedClass(null); // Reset class selection if level changes
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory) count++;
+    if (selectedAgeGroup) count++;
+    if (selectedSchoolLevel) count++;
+    if (selectedClass) count++;
+    return count;
+  }, [selectedCategory, selectedAgeGroup, selectedSchoolLevel, selectedClass]);
+
+  const clearAllFilters = () => {
+    setSelectedCategory(null);
+    setSelectedAgeGroup(null);
+    setSelectedSchoolLevel(null);
+    setSelectedClass(null);
+    setSearchQuery('');
   };
 
   return (
@@ -79,122 +81,147 @@ export default function CatalogScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.toolbar}>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <IconSymbol name="plus" size={20} color="#888" style={{transform: [{rotate: '45deg'}]}} /> {/* Placeholder for search icon */}
+          <IconSymbol name="magnifyingglass" size={20} color="#888" />
           <TextInput 
             style={styles.searchInput}
             placeholder="Rechercher une activité..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#aaa"
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <IconSymbol name="xmark" size={18} color="#888" />
+            </TouchableOpacity>
+          )}
         </View>
-        <TouchableOpacity style={styles.toolBtn} onPress={() => setShowFilters(!showFilters)}>
-          <IconSymbol name="line.3.horizontal.decrease.circle" size={20} color={showFilters ? '#0a7ea4' : '#888'} />
+        <TouchableOpacity 
+          style={[styles.viewModeBtn, filtersVisible && { backgroundColor: '#e6f2f7' }]} 
+          onPress={() => setFiltersVisible(!filtersVisible)}
+        >
+          <IconSymbol name="line.3.horizontal.decrease.circle" size={20} color="#0a7ea4" />
+          {activeFilterCount > 0 && <View style={styles.filterDot} />}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.toolBtn} onPress={() => setViewMode(viewMode === 'list' ? 'card' : 'list')}>
+        <TouchableOpacity style={styles.viewModeBtn} onPress={() => setViewMode(viewMode === 'list' ? 'card' : 'list')}>
           <IconSymbol name={viewMode === 'list' ? 'square.grid.2x2.fill' : 'list.bullet'} size={20} color="#0a7ea4" />
         </TouchableOpacity>
       </View>
 
-      {/* Filters Area */}
-      {showFilters && (
-        <View style={styles.filtersArea}>
-          <View style={styles.segmentedControl}>
-            <TouchableOpacity
-              style={[styles.segmentBtn, selectedType === 'Centre' && styles.segmentBtnActive]}
-              onPress={() => handleTypeChange('Centre')}
-            >
-              <Text style={[styles.segmentBtnText, selectedType === 'Centre' && styles.segmentBtnTextActive]}>
-                Centre
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.segmentBtn, selectedType === 'Periscolaire' && styles.segmentBtnActive]}
-              onPress={() => handleTypeChange('Periscolaire')}
-            >
-              <Text style={[styles.segmentBtnText, selectedType === 'Periscolaire' && styles.segmentBtnTextActive]}>
-                Périscolaire
-              </Text>
-            </TouchableOpacity>
-          </View>
+      {/* Type Segmented Control */}
+      <View style={styles.segmentedControl}>
+        <TouchableOpacity
+          style={[styles.segmentBtn, selectedType === 'Centre' && styles.segmentBtnActive]}
+          onPress={() => handleTypeChange('Centre')}
+        >
+          <Text style={[styles.segmentBtnText, selectedType === 'Centre' && styles.segmentBtnTextActive]}>
+            Centre
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segmentBtn, selectedType === 'Periscolaire' && styles.segmentBtnActive]}
+          onPress={() => handleTypeChange('Periscolaire')}
+        >
+          <Text style={[styles.segmentBtnText, selectedType === 'Periscolaire' && styles.segmentBtnTextActive]}>
+            Périscolaire
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Secondary Choice based on type */}
-      <View style={styles.filtersContainer}>
-        {selectedType === 'Centre' && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-            {AGE_GROUPS.map((age) => (
-              <FilterChip
-                key={age}
-                label={age}
-                selected={selectedAgeGroup === age}
-                onPress={() => setSelectedAgeGroup(selectedAgeGroup === age ? null : age)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
-        {selectedType === 'Periscolaire' && (
-          <View>
+      {filtersVisible && (
+        <>
+          {/* Category Chips */}
+          <View style={styles.filterSection}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-              {SCHOOL_LEVELS.map((level) => (
-                <FilterChip
-                  key={level}
-                  label={level.charAt(0).toUpperCase() + level.slice(1)}
-                  selected={selectedSchoolLevel === level}
-                  onPress={() => handleSchoolLevelChange(selectedSchoolLevel === level ? '' : level)}
-                />
+              {CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
+                  onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                >
+                  <IconSymbol 
+                    name={CATEGORY_ICONS[cat] as any} 
+                    size={16} 
+                    color={selectedCategory === cat ? '#fff' : '#666'} 
+                  />
+                  <Text style={[styles.categoryChipText, selectedCategory === cat && styles.categoryChipTextActive]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
               ))}
             </ScrollView>
-
-            {/* Tertiary filters depending on primary/maternelle */}
-            {selectedSchoolLevel === 'primaire' && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, styles.subChips]}>
-                {PRIMAIRE_CLASSES.map((cls) => (
-                  <FilterChip
-                    key={cls}
-                    label={cls}
-                    selected={selectedClass === cls}
-                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
-                    isSubChip
-                  />
-                ))}
-              </ScrollView>
-            )}
-            
-            {selectedSchoolLevel === 'maternelle' && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, styles.subChips]}>
-                {MATERNELLE_CLASSES.map((cls) => (
-                  <FilterChip
-                    key={cls}
-                    label={cls}
-                    selected={selectedClass === cls}
-                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
-                    isSubChip
-                  />
-                ))}
-              </ScrollView>
-            )}
           </View>
-        )}
-      </View>
-        </View>
+
+          {/* Type-specific filters */}
+          {selectedType === 'Centre' && (
+            <View style={styles.filterSection}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+                {AGE_GROUPS.map((age) => (
+                  <TouchableOpacity
+                    key={age}
+                    style={[styles.chip, selectedAgeGroup === age && styles.chipSelected]}
+                    onPress={() => setSelectedAgeGroup(selectedAgeGroup === age ? null : age)}
+                  >
+                    <Text style={[styles.chipText, selectedAgeGroup === age && styles.chipTextSelected]}>{age}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {selectedType === 'Periscolaire' && (
+            <View style={styles.filterSection}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+                {SCHOOL_LEVELS.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.chip, selectedSchoolLevel === level && styles.chipSelected]}
+                    onPress={() => {
+                      setSelectedSchoolLevel(selectedSchoolLevel === level ? null : level);
+                      setSelectedClass(null);
+                    }}
+                  >
+                    <Text style={[styles.chipText, selectedSchoolLevel === level && styles.chipTextSelected]}>
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {selectedSchoolLevel === 'primaire' && PRIMAIRE_CLASSES.map((cls) => (
+                  <TouchableOpacity
+                    key={cls}
+                    style={[styles.subChip, selectedClass === cls && styles.chipSelected]}
+                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
+                  >
+                    <Text style={[styles.chipText, selectedClass === cls && styles.chipTextSelected]}>{cls}</Text>
+                  </TouchableOpacity>
+                ))}
+                {selectedSchoolLevel === 'maternelle' && MATERNELLE_CLASSES.map((cls) => (
+                  <TouchableOpacity
+                    key={cls}
+                    style={[styles.subChip, selectedClass === cls && styles.chipSelected]}
+                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
+                  >
+                    <Text style={[styles.chipText, selectedClass === cls && styles.chipTextSelected]}>{cls}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </>
       )}
 
-      {/* Category filters */}
-      <View style={styles.categoryFiltersContainer}>
-        <Text style={styles.filterTitle}>Catégorie</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-          {CATEGORIES.map((cat) => (
-            <FilterChip
-              key={cat}
-              label={cat}
-              selected={selectedCategory === cat}
-              onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-            />
-          ))}
-        </ScrollView>
-      </View>
+      {/* Active filters summary */}
+      {activeFilterCount > 0 && (
+        <View style={styles.activeFiltersBar}>
+          <Text style={styles.activeFiltersText}>{filteredData.length} résultat{filteredData.length !== 1 ? 's' : ''}</Text>
+          <TouchableOpacity onPress={clearAllFilters} style={styles.clearFiltersBtn}>
+            <IconSymbol name="xmark" size={14} color="#0a7ea4" />
+            <Text style={styles.clearFiltersText}>Effacer les filtres</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Content */}
       <ScrollView contentContainerStyle={styles.contentList}>
@@ -202,26 +229,15 @@ export default function CatalogScreen() {
           filteredData.map((item) => <CatalogItemCard key={item.id} item={item} viewMode={viewMode} />)
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Aucune activité trouvée pour ces critères.</Text>
+            <IconSymbol name="magnifyingglass" size={40} color="#ccc" />
+            <Text style={styles.emptyText}>Aucune activité trouvée.</Text>
+            <Text style={styles.emptySubtext}>Essayez de modifier les filtres ou la recherche.</Text>
           </View>
         )}
       </ScrollView>
     </View>
   );
 }
-
-const FilterChip = ({ label, selected, onPress, isSubChip = false }: any) => (
-  <TouchableOpacity
-    style={[
-      styles.chip,
-      isSubChip && styles.subChip,
-      selected && styles.chipSelected
-    ]}
-    onPress={onPress}
-  >
-    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -249,42 +265,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
-  toolbar: {
+
+  // Search
+  searchContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingVertical: 12,
     gap: 8,
+    backgroundColor: '#fff',
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e6e6e6',
+    backgroundColor: '#f0f0f0',
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 8,
-    fontSize: 16,
+    fontSize: 15,
+    color: '#333',
   },
-  toolBtn: {
+  viewModeBtn: {
     width: 44,
     height: 44,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: '#f0f0f0',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  filtersArea: {
-    marginBottom: 8,
+  filterDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff5722',
   },
+
+  // Segmented Control
   segmentedControl: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#e6e6e6',
+    marginVertical: 8,
+    backgroundColor: '#f0f0f0',
     borderRadius: 12,
     padding: 4,
   },
@@ -303,45 +332,61 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   segmentBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#666',
   },
   segmentBtnTextActive: {
     color: '#0a7ea4',
   },
-  filtersContainer: {
-    marginBottom: 8,
-  },
-  categoryFiltersContainer: {
-    marginBottom: 16,
-  },
-  filterTitle: {
-    marginBottom: 8,
-    marginHorizontal: 16,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#444',
+
+  // Filters
+  filterSection: {
+    marginBottom: 4,
   },
   chipsRow: {
     paddingHorizontal: 16,
+    paddingVertical: 6,
     gap: 8,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff',
+    borderColor: '#e0e0e0',
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  categoryChipActive: {
+    backgroundColor: '#0a7ea4',
+    borderColor: '#0a7ea4',
+  },
+  categoryChipText: {
+    color: '#555',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  categoryChipTextActive: {
+    color: '#fff',
   },
   chip: {
     backgroundColor: '#fff',
     borderColor: '#ddd',
     borderWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 20,
-    marginRight: 8,
-  },
-  subChips: {
-    marginTop: 8,
   },
   subChip: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 0,
+    backgroundColor: '#f5f5f5',
+    borderColor: '#e0e0e0',
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
   },
   chipSelected: {
     backgroundColor: '#0a7ea4',
@@ -350,10 +395,37 @@ const styles = StyleSheet.create({
   chipText: {
     color: '#555',
     fontWeight: '500',
+    fontSize: 13,
   },
   chipTextSelected: {
     color: '#fff',
   },
+
+  // Active Filters
+  activeFiltersBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  activeFiltersText: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
+  },
+  clearFiltersBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clearFiltersText: {
+    fontSize: 13,
+    color: '#0a7ea4',
+    fontWeight: '600',
+  },
+
+  // Content
   contentList: {
     padding: 16,
     paddingBottom: 40,
@@ -366,5 +438,12 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 16,
     textAlign: 'center',
+    marginTop: 12,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    color: '#aaa',
+    fontSize: 13,
+    marginTop: 4,
   },
 });
