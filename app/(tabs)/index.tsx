@@ -1,98 +1,288 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { CatalogItemCard } from '@/components/ui/CatalogItemCard';
+import { AppCategory, AppType, CATALOG_DATA } from '@/constants/data';
+import { useMemo, useState } from 'react';
+import { Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const CATEGORIES: AppCategory[] = ['Activités', 'Coloriage', 'Jeux'];
+const AGE_GROUPS = ['3 ans', '5 ans', '6 ans', '7/8 ans', '9 ans+'];
+const SCHOOL_LEVELS = ['primaire', 'maternelle'];
+const PRIMAIRE_CLASSES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
+const MATERNELLE_CLASSES = ['Petite section', 'Moyenne section', 'Grande section'];
 
-export default function HomeScreen() {
+export default function CatalogScreen() {
+  const [selectedType, setSelectedType] = useState<AppType>('Centre');
+  
+  // State for 'Centre'
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
+  
+  // State for 'Periscolaire'
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+
+  // Common filters
+  const [selectedCategory, setSelectedCategory] = useState<AppCategory | null>(null);
+
+  const filteredData = useMemo(() => {
+    return CATALOG_DATA.filter((item) => {
+      // 1. Matches Type
+      if (item.type !== selectedType) return false;
+
+      // 2. Matches Category
+      if (selectedCategory && item.category !== selectedCategory) return false;
+
+      // 3. Matches Type-specific subfilters
+      if (selectedType === 'Centre') {
+        if (selectedAgeGroup && item.ageGroup !== selectedAgeGroup) return false;
+      } else if (selectedType === 'Periscolaire') {
+        if (selectedSchoolLevel && item.schoolLevel !== selectedSchoolLevel) return false;
+        if (selectedClass && item.schoolClass !== selectedClass) return false;
+      }
+
+      return true;
+    });
+  }, [selectedType, selectedCategory, selectedAgeGroup, selectedSchoolLevel, selectedClass]);
+
+  // Handling type switch
+  const handleTypeChange = (type: AppType) => {
+    setSelectedType(type);
+    setSelectedAgeGroup(null);
+    setSelectedSchoolLevel(null);
+    setSelectedClass(null);
+  };
+
+  const handleSchoolLevelChange = (level: string) => {
+    setSelectedSchoolLevel(level);
+    setSelectedClass(null); // Reset class selection if level changes
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Catalogue</Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Main Choice - Filter */}
+      <View style={styles.segmentedControl}>
+        <TouchableOpacity
+          style={[styles.segmentBtn, selectedType === 'Centre' && styles.segmentBtnActive]}
+          onPress={() => handleTypeChange('Centre')}
+        >
+          <Text style={[styles.segmentBtnText, selectedType === 'Centre' && styles.segmentBtnTextActive]}>
+            Centre
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segmentBtn, selectedType === 'Periscolaire' && styles.segmentBtnActive]}
+          onPress={() => handleTypeChange('Periscolaire')}
+        >
+          <Text style={[styles.segmentBtnText, selectedType === 'Periscolaire' && styles.segmentBtnTextActive]}>
+            Périscolaire
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Secondary Choice based on type */}
+      <View style={styles.filtersContainer}>
+        {selectedType === 'Centre' && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+            {AGE_GROUPS.map((age) => (
+              <FilterChip
+                key={age}
+                label={age}
+                selected={selectedAgeGroup === age}
+                onPress={() => setSelectedAgeGroup(selectedAgeGroup === age ? null : age)}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        {selectedType === 'Periscolaire' && (
+          <View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+              {SCHOOL_LEVELS.map((level) => (
+                <FilterChip
+                  key={level}
+                  label={level.charAt(0).toUpperCase() + level.slice(1)}
+                  selected={selectedSchoolLevel === level}
+                  onPress={() => handleSchoolLevelChange(selectedSchoolLevel === level ? '' : level)}
+                />
+              ))}
+            </ScrollView>
+
+            {/* Tertiary filters depending on primary/maternelle */}
+            {selectedSchoolLevel === 'primaire' && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, styles.subChips]}>
+                {PRIMAIRE_CLASSES.map((cls) => (
+                  <FilterChip
+                    key={cls}
+                    label={cls}
+                    selected={selectedClass === cls}
+                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
+                    isSubChip
+                  />
+                ))}
+              </ScrollView>
+            )}
+            
+            {selectedSchoolLevel === 'maternelle' && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipsRow, styles.subChips]}>
+                {MATERNELLE_CLASSES.map((cls) => (
+                  <FilterChip
+                    key={cls}
+                    label={cls}
+                    selected={selectedClass === cls}
+                    onPress={() => setSelectedClass(selectedClass === cls ? null : cls)}
+                    isSubChip
+                  />
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        )}
+      </View>
+
+      {/* Category filters */}
+      <View style={styles.categoryFiltersContainer}>
+        <Text style={styles.filterTitle}>Catégorie</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+          {CATEGORIES.map((cat) => (
+            <FilterChip
+              key={cat}
+              label={cat}
+              selected={selectedCategory === cat}
+              onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Content */}
+      <ScrollView contentContainerStyle={styles.contentList}>
+        {filteredData.length > 0 ? (
+          filteredData.map((item) => <CatalogItemCard key={item.id} item={item} />)
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Aucune activité trouvée pour ces critères.</Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+const FilterChip = ({ label, selected, onPress, isSubChip = false }: any) => (
+  <TouchableOpacity
+    style={[
+      styles.chip,
+      isSubChip && styles.subChip,
+      selected && styles.chipSelected
+    ]}
+    onPress={onPress}
+  >
+    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+  </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#e6e6e6',
+    borderRadius: 12,
+    padding: 4,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  segmentBtnActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  segmentBtnTextActive: {
+    color: '#0a7ea4',
+  },
+  filtersContainer: {
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  categoryFiltersContainer: {
+    marginBottom: 16,
+  },
+  filterTitle: {
+    marginBottom: 8,
+    marginHorizontal: 16,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#444',
+  },
+  chipsRow: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  chip: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  subChips: {
+    marginTop: 8,
+  },
+  subChip: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 0,
+  },
+  chipSelected: {
+    backgroundColor: '#0a7ea4',
+    borderColor: '#0a7ea4',
+  },
+  chipText: {
+    color: '#555',
+    fontWeight: '500',
+  },
+  chipTextSelected: {
+    color: '#fff',
+  },
+  contentList: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

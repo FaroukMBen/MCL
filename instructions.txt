@@ -1,0 +1,22 @@
+The main goal is to create an application in french that will work as a local catalog for the user, in preference using mongoDB structure.
+In the application we will have two main pages, one for the catalog itself and one for the profile.
+In the catalog :
+    ps: honestly I don't really know a good way to put it, so that it will be more ergonomic but for the first version we will have
+    - 2 buttons that will represent two choices, "Centre" and "Periscolaire"
+    - If "Centre" is clicked then => "3 ans", "5 ans", "6 ans", "7/8 ans", "9 ans+" or we will have every activity and then we will have a button that says "tranche d'age" in wich we will filter out, I still have some confusions
+    - If "Periscolaire" is clicked then => "primaire" and "maternelle"
+    - In "primaire" => "CP", "CE1", "CE2", "CM1", "CM2"
+    - In "maternelle" => "Petite section", "Moyenne section", "Grande section"
+    - Then we will have three main categories : "Activités", "coloriage", "jeux"
+    - In each activity (all the categories are the same data form expect if you see otherwise) : Title, Description, Image, Duration?, Location?, prerequis?
+    ps : obviously coloriage is mainly just an image but yeah
+
+In the profile page :
+    - We can save all the progress in a file or a zip? I don't know, but we can save the progress of the user, like the activities he has done, the coloring pages he has colored, the games he has played, etc.
+    - We can also have a button that says "Exporter" that will allow the user to export his progress in a file or a zip?
+    - We can also have a button that says "Importer" that will allow the user to import his progress from a file or a zip?
+    - We can also have a button that says "Supprimer" that will allow the user to delete his progress
+    By default he will have an option to either import or to start a new file
+    It would be VERY cool if we could adapt a gamifying system with xp, achievements, badges and stuff
+
+feel free to upgrade the ergonomics, have a decent UI, and that's it
