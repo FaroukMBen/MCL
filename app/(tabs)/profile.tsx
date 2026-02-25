@@ -3,6 +3,7 @@ import { Achievement, getLevelFromXp, getLevelTitle, RARITY_COLORS, RARITY_LABEL
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
 import { Alert, Image, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -23,8 +24,12 @@ export default function ProfileScreen() {
   const customActivities = useStore((state) => state.customActivities);
   const resetProgress = useStore((state) => state.resetProgress);
   const importState = useStore((state) => state.importState);
+  const router = useRouter();
 
   const [filterRarity, setFilterRarity] = useState<string | null>(null);
+  const [isAchievementsExpanded, setIsAchievementsExpanded] = useState(false);
+
+  const INITIAL_ACHIEVEMENTS_LIMIT = 4;
 
   const FILE_URI = `${FileSystem.documentDirectory}profile_data.json`;
 
@@ -288,9 +293,26 @@ export default function ProfileScreen() {
           </ScrollView>
 
           {/* Achievement Cards */}
-          {sortedAchievements.map((ach) => (
+          {(isAchievementsExpanded ? sortedAchievements : sortedAchievements.slice(0, INITIAL_ACHIEVEMENTS_LIMIT)).map((ach) => (
             <AchievementCard key={ach.id} achievement={ach} />
           ))}
+
+          {sortedAchievements.length > INITIAL_ACHIEVEMENTS_LIMIT && (
+            <TouchableOpacity 
+              style={styles.expandBtn} 
+              onPress={() => setIsAchievementsExpanded(!isAchievementsExpanded)}
+            >
+              <Text style={styles.expandBtnText}>
+                {isAchievementsExpanded ? 'Voir moins' : `Voir plus (${sortedAchievements.length - INITIAL_ACHIEVEMENTS_LIMIT} de plus)`}
+              </Text>
+              <IconSymbol 
+                name="chevron.right" 
+                size={16} 
+                color="#0a7ea4" 
+                style={{ transform: [{ rotate: isAchievementsExpanded ? '270deg' : '90deg' }] }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Data Management */}
@@ -310,6 +332,18 @@ export default function ProfileScreen() {
           <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDanger]} onPress={handleReset}>
             <IconSymbol name="trash.fill" size={20} color="#dc3545" />
             <Text style={[styles.actionBtnText, { color: '#dc3545' }]}>Supprimer les données</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* App Settings */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Application</Text>
+          
+          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/update' as any)}>
+            <IconSymbol name="arrow.triangle.2.circlepath" size={20} color="#0a7ea4" />
+            <Text style={[styles.actionBtnText, { color: '#0a7ea4' }]}>Mises à jour</Text>
+            <View style={{ flex: 1 }} />
+            <IconSymbol name="chevron.right" size={16} color="#ccc" />
           </TouchableOpacity>
         </View>
         <View style={{height: 40}} />
@@ -929,5 +963,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  expandBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e6f2f7',
+    marginTop: 8,
+    gap: 8,
+  },
+  expandBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0a7ea4',
   },
 });

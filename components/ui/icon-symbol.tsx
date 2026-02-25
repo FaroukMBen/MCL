@@ -47,6 +47,9 @@ const MAPPING = {
   'arrow.up.circle.fill': 'arrow-circle-up',
   'folder.fill': 'folder',
   'magnifyingglass': 'search',
+  'arrow.triangle.2.circlepath': 'sync',
+  'arrow.clockwise': 'refresh',
+  'exclamationmark.triangle.fill': 'warning',
 } as IconMapping;
 
 /**
